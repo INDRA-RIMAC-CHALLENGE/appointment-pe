@@ -1,0 +1,74 @@
+service: rimac-appointment-pe
+
+provider:
+  name: aws
+  runtime: nodejs18.x
+  profile: default
+  region: us-east-1
+  stage: production
+  memorySize: 512
+  timeout: 30
+  environment:
+    NODE_ENV: production
+    NODE_PORT: 3000
+    AWS_SNS_TOPIC_ARN:
+      Fn::ImportValue: rimac-appointment-topic-arn
+
+    DB_URL: mysql://admin:password123@mydb-instance.abcdefg12345.us-east-1.rds.amazonaws.com:3306/appointment_pe
+
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - sqs:ReceiveMessage
+        - sqs:DeleteMessage
+        - sqs:GetQueueAttributes
+        - events:PutEvents
+      Resource:
+        - Fn::GetAtt: [SQSPe, Arn]
+        - Fn::GetAtt: [SQSFromEventBridge, Arn]
+        - '*'
+
+functions:
+  appointment-pe:
+    handler: dist/lambda.handler
+    events:
+      - sqs:
+          arn:
+            Fn::GetAtt: [SQSPe, Arn]
+
+resources:
+  Resources:
+    SQSPe:
+      Type: AWS::SQS::Queue
+      Properties:
+        QueueName: sqs_pe
+
+    SnsSubscriptionPe:
+      Type: AWS::SNS::Subscription
+      Properties:
+        TopicArn:
+          Fn::ImportValue: rimac-appointment-topic-arn
+        Protocol: sqs
+        Endpoint:
+          Fn::GetAtt: [SQSPe, Arn]
+        FilterPolicy:
+          countryISO:
+            - PE
+
+    EventBridgeRule:
+      Type: AWS::Events::Rule
+      Properties:
+        EventPattern:
+          source:
+            - 'appointment.processor'
+          detail-type:
+            - 'AppointmentCompleted'
+        Targets:
+          - Arn:
+              Fn::GetAtt: [SQSFromEventBridge, Arn]
+            Id: 'TargetSQS'
+
+    SQSFromEventBridge:
+      Type: AWS::SQS::Queue
+      Properties:
+        QueueName: sqs_event_bridge
