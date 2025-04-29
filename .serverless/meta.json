@@ -1,0 +1,1156 @@
+{
+  "C:\\Users\\Pool\\Documents\\Dev Pool\\INDRA\\RIMAC\\appointment-pe\\serverless.yml": {
+    "versionFramework": "4.14.1",
+    "servicePath": "C:\\Users\\Pool\\Documents\\Dev Pool\\INDRA\\RIMAC\\appointment-pe\\serverless.yml",
+    "serviceConfigFileName": "serverless.yml",
+    "service": {
+      "service": "rimac-appointment-pe",
+      "provider": {
+        "name": "aws",
+        "runtime": "nodejs18.x",
+        "profile": "default",
+        "region": "us-east-1",
+        "stage": "production",
+        "memorySize": 512,
+        "timeout": 30,
+        "environment": {
+          "NODE_ENV": "production",
+          "NODE_PORT": "3000",
+          "AWS_SNS_TOPIC_ARN": {
+            "Fn::ImportValue": "rimac-appointment-topic-arn"
+          },
+          "DB_URL": "mysql://admin:password123@mydb-instance.abcdefg12345.us-east-1.rds.amazonaws.com:3306/appointment_pe"
+        },
+        "iamRoleStatements": [
+          {
+            "Effect": "Allow",
+            "Action": [
+              "sqs:ReceiveMessage",
+              "sqs:DeleteMessage",
+              "sqs:GetQueueAttributes",
+              "events:PutEvents"
+            ],
+            "Resource": [
+              {
+                "Fn::GetAtt": [
+                  "SQSPe",
+                  "Arn"
+                ]
+              },
+              {
+                "Fn::ImportValue": "rimac-appointment-SQSFromEventBridgeArn"
+              },
+              "*"
+            ]
+          },
+          {
+            "Effect": "Allow",
+            "Action": [
+              "events:PutEvents"
+            ],
+            "Resource": "*"
+          }
+        ],
+        "versionFunctions": true,
+        "compiledCloudFormationTemplate": {
+          "AWSTemplateFormatVersion": "2010-09-09",
+          "Description": "The AWS CloudFormation template for this Serverless application",
+          "Resources": {
+            "AppointmentDashpeLogGroup": {
+              "Type": "AWS::Logs::LogGroup",
+              "Properties": {
+                "LogGroupName": "/aws/lambda/rimac-appointment-pe-production-appointment-pe"
+              }
+            },
+            "IamRoleLambdaExecution": {
+              "Type": "AWS::IAM::Role",
+              "Properties": {
+                "AssumeRolePolicyDocument": {
+                  "Version": "2012-10-17",
+                  "Statement": [
+                    {
+                      "Effect": "Allow",
+                      "Principal": {
+                        "Service": [
+                          "lambda.amazonaws.com"
+                        ]
+                      },
+                      "Action": [
+                        "sts:AssumeRole"
+                      ]
+                    }
+                  ]
+                },
+                "Policies": [
+                  {
+                    "PolicyName": {
+                      "Fn::Join": [
+                        "-",
+                        [
+                          "rimac-appointment-pe",
+                          "production",
+                          "lambda"
+                        ]
+                      ]
+                    },
+                    "PolicyDocument": {
+                      "Version": "2012-10-17",
+                      "Statement": [
+                        {
+                          "Effect": "Allow",
+                          "Action": [
+                            "logs:CreateLogStream",
+                            "logs:CreateLogGroup",
+                            "logs:TagResource"
+                          ],
+                          "Resource": [
+                            {
+                              "Fn::Sub": "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/rimac-appointment-pe-production*:*"
+                            }
+                          ]
+                        },
+                        {
+                          "Effect": "Allow",
+                          "Action": [
+                            "logs:PutLogEvents"
+                          ],
+                          "Resource": [
+                            {
+                              "Fn::Sub": "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/rimac-appointment-pe-production*:*:*"
+                            }
+                          ]
+                        },
+                        {
+                          "Effect": "Allow",
+                          "Action": [
+                            "sqs:ReceiveMessage",
+                            "sqs:DeleteMessage",
+                            "sqs:GetQueueAttributes",
+                            "events:PutEvents"
+                          ],
+                          "Resource": [
+                            {
+                              "Fn::GetAtt": [
+                                "SQSPe",
+                                "Arn"
+                              ]
+                            },
+                            {
+                              "Fn::ImportValue": "rimac-appointment-SQSFromEventBridgeArn"
+                            },
+                            "*"
+                          ]
+                        },
+                        {
+                          "Effect": "Allow",
+                          "Action": [
+                            "events:PutEvents"
+                          ],
+                          "Resource": "*"
+                        },
+                        {
+                          "Effect": "Allow",
+                          "Action": [
+                            "sqs:ReceiveMessage",
+                            "sqs:DeleteMessage",
+                            "sqs:GetQueueAttributes"
+                          ],
+                          "Resource": [
+                            {
+                              "Fn::GetAtt": [
+                                "SQSPe",
+                                "Arn"
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  }
+                ],
+                "Path": "/",
+                "RoleName": {
+                  "Fn::Join": [
+                    "-",
+                    [
+                      "rimac-appointment-pe",
+                      "production",
+                      {
+                        "Ref": "AWS::Region"
+                      },
+                      "lambdaRole"
+                    ]
+                  ]
+                }
+              }
+            },
+            "AppointmentDashpeLambdaFunction": {
+              "Type": "AWS::Lambda::Function",
+              "Properties": {
+                "Code": {
+                  "S3Bucket": "serverless-framework-deployments-us-east-1-ba990dcd-bd9c",
+                  "S3Key": "serverless/rimac-appointment-pe/production/1745884725016-2025-04-28T23:58:45.016Z/rimac-appointment-pe.zip"
+                },
+                "Handler": "dist/lambda.handler",
+                "Runtime": "nodejs18.x",
+                "FunctionName": "rimac-appointment-pe-production-appointment-pe",
+                "MemorySize": 512,
+                "Timeout": 30,
+                "Environment": {
+                  "Variables": {
+                    "NODE_ENV": "production",
+                    "NODE_PORT": "3000",
+                    "AWS_SNS_TOPIC_ARN": {
+                      "Fn::ImportValue": "rimac-appointment-topic-arn"
+                    },
+                    "DB_URL": "mysql://admin:password123@mydb-instance.abcdefg12345.us-east-1.rds.amazonaws.com:3306/appointment_pe"
+                  }
+                },
+                "Role": {
+                  "Fn::GetAtt": [
+                    "IamRoleLambdaExecution",
+                    "Arn"
+                  ]
+                }
+              },
+              "DependsOn": [
+                "AppointmentDashpeLogGroup"
+              ]
+            },
+            "AppointmentDashpeLambdaVersionGu9NMFUeCSHihfXLCbHAjktV6XdcojfhXshyAvghEU": {
+              "Type": "AWS::Lambda::Version",
+              "DeletionPolicy": "Retain",
+              "Properties": {
+                "FunctionName": {
+                  "Ref": "AppointmentDashpeLambdaFunction"
+                },
+                "CodeSha256": "ShzzcIRYlaN5otTui8AA0BO3wq9KCE7EnyE4kbtlWis="
+              }
+            },
+            "AppointmentDashpeEventSourceMappingSQSSQSPe": {
+              "Type": "AWS::Lambda::EventSourceMapping",
+              "DependsOn": [
+                "IamRoleLambdaExecution"
+              ],
+              "Properties": {
+                "BatchSize": 10,
+                "EventSourceArn": {
+                  "Fn::GetAtt": [
+                    "SQSPe",
+                    "Arn"
+                  ]
+                },
+                "FunctionName": {
+                  "Fn::GetAtt": [
+                    "AppointmentDashpeLambdaFunction",
+                    "Arn"
+                  ]
+                },
+                "Enabled": true
+              }
+            },
+            "SQSPe": {
+              "Type": "AWS::SQS::Queue",
+              "Properties": {
+                "QueueName": "sqs_pe"
+              }
+            },
+            "SQSPePolicy": {
+              "Type": "AWS::SQS::QueuePolicy",
+              "Properties": {
+                "Queues": [
+                  {
+                    "Ref": "SQSPe"
+                  }
+                ],
+                "PolicyDocument": {
+                  "Version": "2012-10-17",
+                  "Statement": [
+                    {
+                      "Sid": "Allow-SNS-SendMessage",
+                      "Effect": "Allow",
+                      "Principal": {
+                        "Service": "sns.amazonaws.com"
+                      },
+                      "Action": "SQS:SendMessage",
+                      "Resource": {
+                        "Fn::GetAtt": [
+                          "SQSPe",
+                          "Arn"
+                        ]
+                      },
+                      "Condition": {
+                        "ArnEquals": {
+                          "aws:SourceArn": {
+                            "Fn::ImportValue": "rimac-appointment-topic-arn"
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            },
+            "SnsSubscriptionPe": {
+              "Type": "AWS::SNS::Subscription",
+              "Properties": {
+                "TopicArn": {
+                  "Fn::ImportValue": "rimac-appointment-topic-arn"
+                },
+                "Protocol": "sqs",
+                "Endpoint": {
+                  "Fn::GetAtt": [
+                    "SQSPe",
+                    "Arn"
+                  ]
+                },
+                "FilterPolicy": {
+                  "countryISO": [
+                    "PE"
+                  ]
+                }
+              }
+            },
+            "EventBridgeRule": {
+              "Type": "AWS::Events::Rule",
+              "Properties": {
+                "EventPattern": {
+                  "source": [
+                    "appointment.processor"
+                  ],
+                  "detail-type": [
+                    "AppointmentCompleted"
+                  ]
+                },
+                "Targets": [
+                  {
+                    "Arn": {
+                      "Fn::ImportValue": "rimac-appointment-SQSFromEventBridgeArn"
+                    },
+                    "Id": "TargetSQS"
+                  }
+                ]
+              }
+            }
+          },
+          "Outputs": {
+            "ServerlessDeploymentBucketName": {
+              "Value": "serverless-framework-deployments-us-east-1-ba990dcd-bd9c",
+              "Export": {
+                "Name": "sls-rimac-appointment-pe-production-ServerlessDeploymentBucketName"
+              }
+            },
+            "AppointmentDashpeLambdaFunctionQualifiedArn": {
+              "Description": "Current Lambda function version",
+              "Value": {
+                "Ref": "AppointmentDashpeLambdaVersionGu9NMFUeCSHihfXLCbHAjktV6XdcojfhXshyAvghEU"
+              },
+              "Export": {
+                "Name": "sls-rimac-appointment-pe-production-AppointmentDashpeLambdaFunctionQualifiedArn"
+              }
+            }
+          }
+        },
+        "vpc": {}
+      },
+      "functions": {
+        "appointment-pe": {
+          "handler": "dist/lambda.handler",
+          "events": [
+            {
+              "sqs": {
+                "arn": {
+                  "Fn::GetAtt": [
+                    "SQSPe",
+                    "Arn"
+                  ]
+                }
+              }
+            }
+          ],
+          "name": "rimac-appointment-pe-production-appointment-pe",
+          "package": {},
+          "memory": 512,
+          "timeout": 30,
+          "runtime": "nodejs18.x",
+          "vpc": {},
+          "versionLogicalId": "AppointmentDashpeLambdaVersionGu9NMFUeCSHihfXLCbHAjktV6XdcojfhXshyAvghEU"
+        }
+      },
+      "resources": {
+        "Resources": {
+          "SQSPe": {
+            "Type": "AWS::SQS::Queue",
+            "Properties": {
+              "QueueName": "sqs_pe"
+            }
+          },
+          "SQSPePolicy": {
+            "Type": "AWS::SQS::QueuePolicy",
+            "Properties": {
+              "Queues": [
+                {
+                  "Ref": "SQSPe"
+                }
+              ],
+              "PolicyDocument": {
+                "Version": "2012-10-17",
+                "Statement": [
+                  {
+                    "Sid": "Allow-SNS-SendMessage",
+                    "Effect": "Allow",
+                    "Principal": {
+                      "Service": "sns.amazonaws.com"
+                    },
+                    "Action": "SQS:SendMessage",
+                    "Resource": {
+                      "Fn::GetAtt": [
+                        "SQSPe",
+                        "Arn"
+                      ]
+                    },
+                    "Condition": {
+                      "ArnEquals": {
+                        "aws:SourceArn": {
+                          "Fn::ImportValue": "rimac-appointment-topic-arn"
+                        }
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          },
+          "SnsSubscriptionPe": {
+            "Type": "AWS::SNS::Subscription",
+            "Properties": {
+              "TopicArn": {
+                "Fn::ImportValue": "rimac-appointment-topic-arn"
+              },
+              "Protocol": "sqs",
+              "Endpoint": {
+                "Fn::GetAtt": [
+                  "SQSPe",
+                  "Arn"
+                ]
+              },
+              "FilterPolicy": {
+                "countryISO": [
+                  "PE"
+                ]
+              }
+            }
+          },
+          "EventBridgeRule": {
+            "Type": "AWS::Events::Rule",
+            "Properties": {
+              "EventPattern": {
+                "source": [
+                  "appointment.processor"
+                ],
+                "detail-type": [
+                  "AppointmentCompleted"
+                ]
+              },
+              "Targets": [
+                {
+                  "Arn": {
+                    "Fn::ImportValue": "rimac-appointment-SQSFromEventBridgeArn"
+                  },
+                  "Id": "TargetSQS"
+                }
+              ]
+            }
+          }
+        },
+        "Outputs": {}
+      }
+    },
+    "provider": {
+      "name": "aws",
+      "runtime": "nodejs18.x",
+      "profile": "default",
+      "region": "us-east-1",
+      "stage": "production",
+      "memorySize": 512,
+      "timeout": 30,
+      "environment": {
+        "NODE_ENV": "production",
+        "NODE_PORT": "3000",
+        "AWS_SNS_TOPIC_ARN": {
+          "Fn::ImportValue": "rimac-appointment-topic-arn"
+        },
+        "DB_URL": "mysql://admin:password123@mydb-instance.abcdefg12345.us-east-1.rds.amazonaws.com:3306/appointment_pe"
+      },
+      "iamRoleStatements": [
+        {
+          "Effect": "Allow",
+          "Action": [
+            "sqs:ReceiveMessage",
+            "sqs:DeleteMessage",
+            "sqs:GetQueueAttributes",
+            "events:PutEvents"
+          ],
+          "Resource": [
+            {
+              "Fn::GetAtt": [
+                "SQSPe",
+                "Arn"
+              ]
+            },
+            {
+              "Fn::ImportValue": "rimac-appointment-SQSFromEventBridgeArn"
+            },
+            "*"
+          ]
+        },
+        {
+          "Effect": "Allow",
+          "Action": [
+            "events:PutEvents"
+          ],
+          "Resource": "*"
+        }
+      ],
+      "versionFunctions": true,
+      "compiledCloudFormationTemplate": {
+        "AWSTemplateFormatVersion": "2010-09-09",
+        "Description": "The AWS CloudFormation template for this Serverless application",
+        "Resources": {
+          "AppointmentDashpeLogGroup": {
+            "Type": "AWS::Logs::LogGroup",
+            "Properties": {
+              "LogGroupName": "/aws/lambda/rimac-appointment-pe-production-appointment-pe"
+            }
+          },
+          "IamRoleLambdaExecution": {
+            "Type": "AWS::IAM::Role",
+            "Properties": {
+              "AssumeRolePolicyDocument": {
+                "Version": "2012-10-17",
+                "Statement": [
+                  {
+                    "Effect": "Allow",
+                    "Principal": {
+                      "Service": [
+                        "lambda.amazonaws.com"
+                      ]
+                    },
+                    "Action": [
+                      "sts:AssumeRole"
+                    ]
+                  }
+                ]
+              },
+              "Policies": [
+                {
+                  "PolicyName": {
+                    "Fn::Join": [
+                      "-",
+                      [
+                        "rimac-appointment-pe",
+                        "production",
+                        "lambda"
+                      ]
+                    ]
+                  },
+                  "PolicyDocument": {
+                    "Version": "2012-10-17",
+                    "Statement": [
+                      {
+                        "Effect": "Allow",
+                        "Action": [
+                          "logs:CreateLogStream",
+                          "logs:CreateLogGroup",
+                          "logs:TagResource"
+                        ],
+                        "Resource": [
+                          {
+                            "Fn::Sub": "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/rimac-appointment-pe-production*:*"
+                          }
+                        ]
+                      },
+                      {
+                        "Effect": "Allow",
+                        "Action": [
+                          "logs:PutLogEvents"
+                        ],
+                        "Resource": [
+                          {
+                            "Fn::Sub": "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/rimac-appointment-pe-production*:*:*"
+                          }
+                        ]
+                      },
+                      {
+                        "Effect": "Allow",
+                        "Action": [
+                          "sqs:ReceiveMessage",
+                          "sqs:DeleteMessage",
+                          "sqs:GetQueueAttributes",
+                          "events:PutEvents"
+                        ],
+                        "Resource": [
+                          {
+                            "Fn::GetAtt": [
+                              "SQSPe",
+                              "Arn"
+                            ]
+                          },
+                          {
+                            "Fn::ImportValue": "rimac-appointment-SQSFromEventBridgeArn"
+                          },
+                          "*"
+                        ]
+                      },
+                      {
+                        "Effect": "Allow",
+                        "Action": [
+                          "events:PutEvents"
+                        ],
+                        "Resource": "*"
+                      },
+                      {
+                        "Effect": "Allow",
+                        "Action": [
+                          "sqs:ReceiveMessage",
+                          "sqs:DeleteMessage",
+                          "sqs:GetQueueAttributes"
+                        ],
+                        "Resource": [
+                          {
+                            "Fn::GetAtt": [
+                              "SQSPe",
+                              "Arn"
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                }
+              ],
+              "Path": "/",
+              "RoleName": {
+                "Fn::Join": [
+                  "-",
+                  [
+                    "rimac-appointment-pe",
+                    "production",
+                    {
+                      "Ref": "AWS::Region"
+                    },
+                    "lambdaRole"
+                  ]
+                ]
+              }
+            }
+          },
+          "AppointmentDashpeLambdaFunction": {
+            "Type": "AWS::Lambda::Function",
+            "Properties": {
+              "Code": {
+                "S3Bucket": "serverless-framework-deployments-us-east-1-ba990dcd-bd9c",
+                "S3Key": "serverless/rimac-appointment-pe/production/1745884725016-2025-04-28T23:58:45.016Z/rimac-appointment-pe.zip"
+              },
+              "Handler": "dist/lambda.handler",
+              "Runtime": "nodejs18.x",
+              "FunctionName": "rimac-appointment-pe-production-appointment-pe",
+              "MemorySize": 512,
+              "Timeout": 30,
+              "Environment": {
+                "Variables": {
+                  "NODE_ENV": "production",
+                  "NODE_PORT": "3000",
+                  "AWS_SNS_TOPIC_ARN": {
+                    "Fn::ImportValue": "rimac-appointment-topic-arn"
+                  },
+                  "DB_URL": "mysql://admin:password123@mydb-instance.abcdefg12345.us-east-1.rds.amazonaws.com:3306/appointment_pe"
+                }
+              },
+              "Role": {
+                "Fn::GetAtt": [
+                  "IamRoleLambdaExecution",
+                  "Arn"
+                ]
+              }
+            },
+            "DependsOn": [
+              "AppointmentDashpeLogGroup"
+            ]
+          },
+          "AppointmentDashpeLambdaVersionGu9NMFUeCSHihfXLCbHAjktV6XdcojfhXshyAvghEU": {
+            "Type": "AWS::Lambda::Version",
+            "DeletionPolicy": "Retain",
+            "Properties": {
+              "FunctionName": {
+                "Ref": "AppointmentDashpeLambdaFunction"
+              },
+              "CodeSha256": "ShzzcIRYlaN5otTui8AA0BO3wq9KCE7EnyE4kbtlWis="
+            }
+          },
+          "AppointmentDashpeEventSourceMappingSQSSQSPe": {
+            "Type": "AWS::Lambda::EventSourceMapping",
+            "DependsOn": [
+              "IamRoleLambdaExecution"
+            ],
+            "Properties": {
+              "BatchSize": 10,
+              "EventSourceArn": {
+                "Fn::GetAtt": [
+                  "SQSPe",
+                  "Arn"
+                ]
+              },
+              "FunctionName": {
+                "Fn::GetAtt": [
+                  "AppointmentDashpeLambdaFunction",
+                  "Arn"
+                ]
+              },
+              "Enabled": true
+            }
+          },
+          "SQSPe": {
+            "Type": "AWS::SQS::Queue",
+            "Properties": {
+              "QueueName": "sqs_pe"
+            }
+          },
+          "SQSPePolicy": {
+            "Type": "AWS::SQS::QueuePolicy",
+            "Properties": {
+              "Queues": [
+                {
+                  "Ref": "SQSPe"
+                }
+              ],
+              "PolicyDocument": {
+                "Version": "2012-10-17",
+                "Statement": [
+                  {
+                    "Sid": "Allow-SNS-SendMessage",
+                    "Effect": "Allow",
+                    "Principal": {
+                      "Service": "sns.amazonaws.com"
+                    },
+                    "Action": "SQS:SendMessage",
+                    "Resource": {
+                      "Fn::GetAtt": [
+                        "SQSPe",
+                        "Arn"
+                      ]
+                    },
+                    "Condition": {
+                      "ArnEquals": {
+                        "aws:SourceArn": {
+                          "Fn::ImportValue": "rimac-appointment-topic-arn"
+                        }
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          },
+          "SnsSubscriptionPe": {
+            "Type": "AWS::SNS::Subscription",
+            "Properties": {
+              "TopicArn": {
+                "Fn::ImportValue": "rimac-appointment-topic-arn"
+              },
+              "Protocol": "sqs",
+              "Endpoint": {
+                "Fn::GetAtt": [
+                  "SQSPe",
+                  "Arn"
+                ]
+              },
+              "FilterPolicy": {
+                "countryISO": [
+                  "PE"
+                ]
+              }
+            }
+          },
+          "EventBridgeRule": {
+            "Type": "AWS::Events::Rule",
+            "Properties": {
+              "EventPattern": {
+                "source": [
+                  "appointment.processor"
+                ],
+                "detail-type": [
+                  "AppointmentCompleted"
+                ]
+              },
+              "Targets": [
+                {
+                  "Arn": {
+                    "Fn::ImportValue": "rimac-appointment-SQSFromEventBridgeArn"
+                  },
+                  "Id": "TargetSQS"
+                }
+              ]
+            }
+          }
+        },
+        "Outputs": {
+          "ServerlessDeploymentBucketName": {
+            "Value": "serverless-framework-deployments-us-east-1-ba990dcd-bd9c",
+            "Export": {
+              "Name": "sls-rimac-appointment-pe-production-ServerlessDeploymentBucketName"
+            }
+          },
+          "AppointmentDashpeLambdaFunctionQualifiedArn": {
+            "Description": "Current Lambda function version",
+            "Value": {
+              "Ref": "AppointmentDashpeLambdaVersionGu9NMFUeCSHihfXLCbHAjktV6XdcojfhXshyAvghEU"
+            },
+            "Export": {
+              "Name": "sls-rimac-appointment-pe-production-AppointmentDashpeLambdaFunctionQualifiedArn"
+            }
+          }
+        }
+      },
+      "vpc": {}
+    },
+    "dashboard": {
+      "isEnabledForService": false,
+      "requiredAuthentication": false,
+      "orgFeaturesInUse": null,
+      "orgObservabilityIntegrations": null,
+      "serviceAppId": null,
+      "serviceProvider": null,
+      "instanceParameters": null
+    },
+    "serviceRawFile": "service: rimac-appointment-pe\r\n\r\nprovider:\r\n  name: aws\r\n  runtime: nodejs18.x\r\n  profile: default\r\n  region: us-east-1\r\n  stage: production\r\n  memorySize: 512\r\n  timeout: 30\r\n  environment:\r\n    NODE_ENV: production\r\n    NODE_PORT: 3000\r\n    AWS_SNS_TOPIC_ARN:\r\n      Fn::ImportValue: rimac-appointment-topic-arn\r\n    DB_URL: mysql://admin:password123@mydb-instance.abcdefg12345.us-east-1.rds.amazonaws.com:3306/appointment_pe\r\n\r\n  iamRoleStatements:\r\n    - Effect: Allow\r\n      Action:\r\n        - sqs:ReceiveMessage\r\n        - sqs:DeleteMessage\r\n        - sqs:GetQueueAttributes\r\n        - events:PutEvents\r\n      Resource:\r\n        - Fn::GetAtt: [SQSPe, Arn]\r\n        - Fn::ImportValue: rimac-appointment-SQSFromEventBridgeArn\r\n        - '*'\r\n    - Effect: Allow\r\n      Action:\r\n        - events:PutEvents\r\n      Resource: '*'\r\n\r\nfunctions:\r\n  appointment-pe:\r\n    handler: dist/lambda.handler\r\n    events:\r\n      - sqs:\r\n          arn:\r\n            Fn::GetAtt: [SQSPe, Arn]\r\n\r\nresources:\r\n  Resources:\r\n    SQSPe:\r\n      Type: AWS::SQS::Queue\r\n      Properties:\r\n        QueueName: sqs_pe\r\n\r\n    SQSPePolicy:\r\n      Type: AWS::SQS::QueuePolicy\r\n      Properties:\r\n        Queues:\r\n          - Ref: SQSPe\r\n        PolicyDocument:\r\n          Version: '2012-10-17'\r\n          Statement:\r\n            - Sid: Allow-SNS-SendMessage\r\n              Effect: Allow\r\n              Principal:\r\n                Service: sns.amazonaws.com\r\n              Action: SQS:SendMessage\r\n              Resource:\r\n                Fn::GetAtt: [SQSPe, Arn]\r\n              Condition:\r\n                ArnEquals:\r\n                  aws:SourceArn:\r\n                    Fn::ImportValue: rimac-appointment-topic-arn\r\n\r\n    SnsSubscriptionPe:\r\n      Type: AWS::SNS::Subscription\r\n      Properties:\r\n        TopicArn:\r\n          Fn::ImportValue: rimac-appointment-topic-arn\r\n        Protocol: sqs\r\n        Endpoint:\r\n          Fn::GetAtt: [SQSPe, Arn]\r\n        FilterPolicy:\r\n          countryISO:\r\n            - PE\r\n\r\n    EventBridgeRule:\r\n      Type: AWS::Events::Rule\r\n      Properties:\r\n        EventPattern:\r\n          source:\r\n            - 'appointment.processor'\r\n          detail-type:\r\n            - 'AppointmentCompleted'\r\n        Targets:\r\n          - Arn:\r\n              Fn::ImportValue: rimac-appointment-SQSFromEventBridgeArn\r\n            Id: 'TargetSQS'\r\n",
+    "command": [
+      "deploy"
+    ],
+    "options": {
+      "verbose": true
+    },
+    "orgId": "7435849f-1e92-4a83-8d3f-09278b0cf803",
+    "orgName": "devpool",
+    "userId": "jr77G99TcNlw0Y6cZ1",
+    "userName": "devpool",
+    "serviceProviderAwsAccountId": "009160076096",
+    "serviceProviderAwsCfStackName": "rimac-appointment-pe-production",
+    "serviceProviderAwsCfStackId": "arn:aws:cloudformation:us-east-1:009160076096:stack/rimac-appointment-pe-production/4576aca0-21e8-11f0-bfc7-0e371cf49ae5",
+    "serviceProviderAwsCfStackCreated": "2025-04-25T15:16:33.146Z",
+    "serviceProviderAwsCfStackUpdated": "2025-04-28T23:56:18.319Z",
+    "serviceProviderAwsCfStackStatus": "UPDATE_ROLLBACK_COMPLETE",
+    "serviceProviderAwsCfStackOutputs": [
+      {
+        "OutputKey": "AppointmentDashpeLambdaFunctionQualifiedArn",
+        "OutputValue": "arn:aws:lambda:us-east-1:009160076096:function:rimac-appointment-pe-production-appointment-pe:9",
+        "Description": "Current Lambda function version",
+        "ExportName": "sls-rimac-appointment-pe-production-AppointmentDashpeLambdaFunctionQualifiedArn"
+      },
+      {
+        "OutputKey": "ServerlessDeploymentBucketName",
+        "OutputValue": "serverless-framework-deployments-us-east-1-ba990dcd-bd9c",
+        "ExportName": "sls-rimac-appointment-pe-production-ServerlessDeploymentBucketName"
+      }
+    ],
+    "compiledCloudFormationTemplate": {
+      "AWSTemplateFormatVersion": "2010-09-09",
+      "Description": "The AWS CloudFormation template for this Serverless application",
+      "Resources": {
+        "AppointmentDashpeLogGroup": {
+          "Type": "AWS::Logs::LogGroup",
+          "Properties": {
+            "LogGroupName": "/aws/lambda/rimac-appointment-pe-production-appointment-pe"
+          }
+        },
+        "IamRoleLambdaExecution": {
+          "Type": "AWS::IAM::Role",
+          "Properties": {
+            "AssumeRolePolicyDocument": {
+              "Version": "2012-10-17",
+              "Statement": [
+                {
+                  "Effect": "Allow",
+                  "Principal": {
+                    "Service": [
+                      "lambda.amazonaws.com"
+                    ]
+                  },
+                  "Action": [
+                    "sts:AssumeRole"
+                  ]
+                }
+              ]
+            },
+            "Policies": [
+              {
+                "PolicyName": {
+                  "Fn::Join": [
+                    "-",
+                    [
+                      "rimac-appointment-pe",
+                      "production",
+                      "lambda"
+                    ]
+                  ]
+                },
+                "PolicyDocument": {
+                  "Version": "2012-10-17",
+                  "Statement": [
+                    {
+                      "Effect": "Allow",
+                      "Action": [
+                        "logs:CreateLogStream",
+                        "logs:CreateLogGroup",
+                        "logs:TagResource"
+                      ],
+                      "Resource": [
+                        {
+                          "Fn::Sub": "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/rimac-appointment-pe-production*:*"
+                        }
+                      ]
+                    },
+                    {
+                      "Effect": "Allow",
+                      "Action": [
+                        "logs:PutLogEvents"
+                      ],
+                      "Resource": [
+                        {
+                          "Fn::Sub": "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/rimac-appointment-pe-production*:*:*"
+                        }
+                      ]
+                    },
+                    {
+                      "Effect": "Allow",
+                      "Action": [
+                        "sqs:ReceiveMessage",
+                        "sqs:DeleteMessage",
+                        "sqs:GetQueueAttributes",
+                        "events:PutEvents"
+                      ],
+                      "Resource": [
+                        {
+                          "Fn::GetAtt": [
+                            "SQSPe",
+                            "Arn"
+                          ]
+                        },
+                        {
+                          "Fn::ImportValue": "rimac-appointment-SQSFromEventBridgeArn"
+                        },
+                        "*"
+                      ]
+                    },
+                    {
+                      "Effect": "Allow",
+                      "Action": [
+                        "events:PutEvents"
+                      ],
+                      "Resource": "*"
+                    },
+                    {
+                      "Effect": "Allow",
+                      "Action": [
+                        "sqs:ReceiveMessage",
+                        "sqs:DeleteMessage",
+                        "sqs:GetQueueAttributes"
+                      ],
+                      "Resource": [
+                        {
+                          "Fn::GetAtt": [
+                            "SQSPe",
+                            "Arn"
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              }
+            ],
+            "Path": "/",
+            "RoleName": {
+              "Fn::Join": [
+                "-",
+                [
+                  "rimac-appointment-pe",
+                  "production",
+                  {
+                    "Ref": "AWS::Region"
+                  },
+                  "lambdaRole"
+                ]
+              ]
+            }
+          }
+        },
+        "AppointmentDashpeLambdaFunction": {
+          "Type": "AWS::Lambda::Function",
+          "Properties": {
+            "Code": {
+              "S3Bucket": "serverless-framework-deployments-us-east-1-ba990dcd-bd9c",
+              "S3Key": "serverless/rimac-appointment-pe/production/1745884725016-2025-04-28T23:58:45.016Z/rimac-appointment-pe.zip"
+            },
+            "Handler": "dist/lambda.handler",
+            "Runtime": "nodejs18.x",
+            "FunctionName": "rimac-appointment-pe-production-appointment-pe",
+            "MemorySize": 512,
+            "Timeout": 30,
+            "Environment": {
+              "Variables": {
+                "NODE_ENV": "production",
+                "NODE_PORT": "3000",
+                "AWS_SNS_TOPIC_ARN": {
+                  "Fn::ImportValue": "rimac-appointment-topic-arn"
+                },
+                "DB_URL": "mysql://admin:password123@mydb-instance.abcdefg12345.us-east-1.rds.amazonaws.com:3306/appointment_pe"
+              }
+            },
+            "Role": {
+              "Fn::GetAtt": [
+                "IamRoleLambdaExecution",
+                "Arn"
+              ]
+            }
+          },
+          "DependsOn": [
+            "AppointmentDashpeLogGroup"
+          ]
+        },
+        "AppointmentDashpeLambdaVersionGu9NMFUeCSHihfXLCbHAjktV6XdcojfhXshyAvghEU": {
+          "Type": "AWS::Lambda::Version",
+          "DeletionPolicy": "Retain",
+          "Properties": {
+            "FunctionName": {
+              "Ref": "AppointmentDashpeLambdaFunction"
+            },
+            "CodeSha256": "ShzzcIRYlaN5otTui8AA0BO3wq9KCE7EnyE4kbtlWis="
+          }
+        },
+        "AppointmentDashpeEventSourceMappingSQSSQSPe": {
+          "Type": "AWS::Lambda::EventSourceMapping",
+          "DependsOn": [
+            "IamRoleLambdaExecution"
+          ],
+          "Properties": {
+            "BatchSize": 10,
+            "EventSourceArn": {
+              "Fn::GetAtt": [
+                "SQSPe",
+                "Arn"
+              ]
+            },
+            "FunctionName": {
+              "Fn::GetAtt": [
+                "AppointmentDashpeLambdaFunction",
+                "Arn"
+              ]
+            },
+            "Enabled": true
+          }
+        },
+        "SQSPe": {
+          "Type": "AWS::SQS::Queue",
+          "Properties": {
+            "QueueName": "sqs_pe"
+          }
+        },
+        "SQSPePolicy": {
+          "Type": "AWS::SQS::QueuePolicy",
+          "Properties": {
+            "Queues": [
+              {
+                "Ref": "SQSPe"
+              }
+            ],
+            "PolicyDocument": {
+              "Version": "2012-10-17",
+              "Statement": [
+                {
+                  "Sid": "Allow-SNS-SendMessage",
+                  "Effect": "Allow",
+                  "Principal": {
+                    "Service": "sns.amazonaws.com"
+                  },
+                  "Action": "SQS:SendMessage",
+                  "Resource": {
+                    "Fn::GetAtt": [
+                      "SQSPe",
+                      "Arn"
+                    ]
+                  },
+                  "Condition": {
+                    "ArnEquals": {
+                      "aws:SourceArn": {
+                        "Fn::ImportValue": "rimac-appointment-topic-arn"
+                      }
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        },
+        "SnsSubscriptionPe": {
+          "Type": "AWS::SNS::Subscription",
+          "Properties": {
+            "TopicArn": {
+              "Fn::ImportValue": "rimac-appointment-topic-arn"
+            },
+            "Protocol": "sqs",
+            "Endpoint": {
+              "Fn::GetAtt": [
+                "SQSPe",
+                "Arn"
+              ]
+            },
+            "FilterPolicy": {
+              "countryISO": [
+                "PE"
+              ]
+            }
+          }
+        },
+        "EventBridgeRule": {
+          "Type": "AWS::Events::Rule",
+          "Properties": {
+            "EventPattern": {
+              "source": [
+                "appointment.processor"
+              ],
+              "detail-type": [
+                "AppointmentCompleted"
+              ]
+            },
+            "Targets": [
+              {
+                "Arn": {
+                  "Fn::ImportValue": "rimac-appointment-SQSFromEventBridgeArn"
+                },
+                "Id": "TargetSQS"
+              }
+            ]
+          }
+        }
+      },
+      "Outputs": {
+        "ServerlessDeploymentBucketName": {
+          "Value": "serverless-framework-deployments-us-east-1-ba990dcd-bd9c",
+          "Export": {
+            "Name": "sls-rimac-appointment-pe-production-ServerlessDeploymentBucketName"
+          }
+        },
+        "AppointmentDashpeLambdaFunctionQualifiedArn": {
+          "Description": "Current Lambda function version",
+          "Value": {
+            "Ref": "AppointmentDashpeLambdaVersionGu9NMFUeCSHihfXLCbHAjktV6XdcojfhXshyAvghEU"
+          },
+          "Export": {
+            "Name": "sls-rimac-appointment-pe-production-AppointmentDashpeLambdaFunctionQualifiedArn"
+          }
+        }
+      }
+    }
+  }
+}

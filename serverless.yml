@@ -13,7 +13,6 @@ provider:
     NODE_PORT: 3000
     AWS_SNS_TOPIC_ARN:
       Fn::ImportValue: rimac-appointment-topic-arn
-
     DB_URL: mysql://admin:password123@mydb-instance.abcdefg12345.us-east-1.rds.amazonaws.com:3306/appointment_pe
 
   iamRoleStatements:
@@ -25,8 +24,12 @@ provider:
         - events:PutEvents
       Resource:
         - Fn::GetAtt: [SQSPe, Arn]
-        - Fn::GetAtt: [SQSFromEventBridge, Arn]
+        - Fn::ImportValue: rimac-appointment-SQSFromEventBridgeArn
         - '*'
+    - Effect: Allow
+      Action:
+        - events:PutEvents
+      Resource: '*'
 
 functions:
   appointment-pe:
@@ -42,6 +45,26 @@ resources:
       Type: AWS::SQS::Queue
       Properties:
         QueueName: sqs_pe
+
+    SQSPePolicy:
+      Type: AWS::SQS::QueuePolicy
+      Properties:
+        Queues:
+          - Ref: SQSPe
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+            - Sid: Allow-SNS-SendMessage
+              Effect: Allow
+              Principal:
+                Service: sns.amazonaws.com
+              Action: SQS:SendMessage
+              Resource:
+                Fn::GetAtt: [SQSPe, Arn]
+              Condition:
+                ArnEquals:
+                  aws:SourceArn:
+                    Fn::ImportValue: rimac-appointment-topic-arn
 
     SnsSubscriptionPe:
       Type: AWS::SNS::Subscription
@@ -65,10 +88,5 @@ resources:
             - 'AppointmentCompleted'
         Targets:
           - Arn:
-              Fn::GetAtt: [SQSFromEventBridge, Arn]
+              Fn::ImportValue: rimac-appointment-SQSFromEventBridgeArn
             Id: 'TargetSQS'
-
-    SQSFromEventBridge:
-      Type: AWS::SQS::Queue
-      Properties:
-        QueueName: sqs_event_bridge

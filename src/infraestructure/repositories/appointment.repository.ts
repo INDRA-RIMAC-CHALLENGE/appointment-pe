@@ -1,5 +1,5 @@
-import { Appointment } from 'src/domain/entity/appointment.entity';
-import { IAppointmentRepository } from 'src/domain/repositories/appointment.repository';
+import { Appointment } from '../../domain/entity/appointment.entity';
+import { IAppointmentRepository } from '../../domain/repositories/appointment.repository';
 import { Prisma } from '../database/prisma.database';
 
 export class AppointmentRepository implements IAppointmentRepository {

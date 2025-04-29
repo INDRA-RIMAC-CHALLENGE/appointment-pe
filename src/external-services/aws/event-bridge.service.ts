@@ -1,5 +1,8 @@
 import { EventBridge } from 'aws-sdk';
-import { envConfig, Environment } from 'src/infraestructure/config/main.config';
+import {
+  envConfig,
+  Environment,
+} from '../../infraestructure/config/main.config';
 
 export class EventBridgePublisher {
   private eventBridge =

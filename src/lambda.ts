@@ -9,18 +9,25 @@ const eventBridgePublisher = new EventBridgePublisher();
 
 export const handler = async (event: SQSEvent) => {
   for (const record of event.Records) {
-    const snsMessage = JSON.parse(record.body);
-    const jsonAppointment = JSON.parse(snsMessage.Message);
+    try {
+      const snsMessage = JSON.parse(record.body);
+      const jsonAppointment = JSON.parse(snsMessage.Message);
 
-    console.log('Obteniendo el mensaje de SNS', snsMessage);
+      console.log('Obteniendo el mensaje de SNS', snsMessage);
 
-    const appointment = new Appointment(jsonAppointment);
+      const appointment = new Appointment(jsonAppointment);
 
-    await repository.createAppointment(appointment);
+      await repository.createAppointment(appointment);
 
-    console.log('createAppointment', appointment);
+      console.log('createAppointment', appointment);
 
-    await eventBridgePublisher.publish(appointment);
+      await eventBridgePublisher.publish(appointment);
+
+      console.log('Evento publicado en EventBridge:', appointment);
+    } catch (error) {
+      console.error('Error procesando el mensaje:', error, record.body);
+      // Opcional: enviar a DLQ manualmente o registrar en un sistema de errores
+    }
   }
 
   return { statusCode: 200 };
